@@ -1,12 +1,10 @@
-//https://www.factoryforward.com/mp3-tf-16p-arduino-dfplayer/
-
 #include "Arduino.h"
  
 #include "SoftwareSerial.h"
  
 #include "DFRobotDFPlayerMini.h"
  
-SoftwareSerial mySoftwareSerial(2, 3); // RX, TX
+SoftwareSerial mySoftwareSerial(3, 2); // RX, TX
  
 DFRobotDFPlayerMini myDFPlayer;
 
@@ -16,7 +14,7 @@ const int echoPin = 10;
 // defines variables
 long duration;
 int distance;
- 
+int obstacle = 0;
 void setup()
  
 {
@@ -47,43 +45,59 @@ void setup()
   Serial.println(F("DFPlayer Mini online."));
  
   myDFPlayer.volume(20);  //Set volume value. From 0 to 30
- 
+  delay(2000);
 }
  
 void loop()
- 
 {
- digitalWrite(trigPin, LOW);
- delayMicroseconds(2);
- // Sets the trigPin on HIGH state for 10 micro seconds
- digitalWrite(trigPin, HIGH);
- delayMicroseconds(10);
- digitalWrite(trigPin, LOW);
- // Reads the echoPin, returns the sound wave travel time in microseconds
- duration = pulseIn(echoPin, HIGH);
- // Calculating the distance
- distance= duration*0.034/2;
- // Prints the distance on the Serial Monitor
- Serial.print("Distance: ");
- Serial.println(distance);
+  if(measureDistance() < 25){
+  for(int i=0; i<4;i++)
+     {
+       distance = measureDistance();
+       //Serial.print(i);
+       if(i != 0)
+         {
+           // Calculating the distance
+           distance += distance;
+           delay(50);
+         }
+     }
+         
+  distance = distance/3;
+  // Prints the distance on the Serial Monitor
+  Serial.print("Distance: ");
+  Serial.println(distance);
+  delay(50);
+  if((distance < 25) && (distance > 10))
+    {
+      Serial.println("first mp3");
+      myDFPlayer.play(1);  //Play the first mp3
+      delay(20000);
+    }
  
- if(distance < 20 && distance > 8){
-  myDFPlayer.play(1);  //Play the first mp3
-  delay(20000);
- }
+  if(distance <= 10)
+    {
+      Serial.println("second mp3");
+      myDFPlayer.play(2);  //Play second mp3
+      delay(3000);
+    }
+  }
  
- if(distance < 8){
-  myDFPlayer.next();  //Play next mp3
-  delay(3000);
- }
-  
  
- // myDFPlayer.next();  //Play next mp3
- 
-//delay(2000);
- 
-  //myDFPlayer.next();  //Play next mp3
- 
-//delay(2000);
- 
+}
+
+int measureDistance(){
+  int d=0;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  d += duration*0.034/2;
+  return d;
+   
 }
